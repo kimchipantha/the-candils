@@ -39,8 +39,7 @@ const allowedOrigins = [
   // Tambahkan domain frontend lokal default Vite
   'http://localhost:5173',
   // Frontend Deployed (Vercel)
-  'https://dev-the-candils-app.vercel.app',
-  'https://the-candils-app.vercel.app',
+  'https://the-candils.vercel.app',
   // Frontend Deployed (Hostinger)
   'https://the-candils.com',
   'https://www.the-candils.com',
