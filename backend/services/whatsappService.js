@@ -2,18 +2,23 @@ const sendOrderConfirmation = async (phoneNumber, orderDetails) => {
   try {
     // Konfigurasi API WhatsApp (Sesuaikan dengan provider Anda, misal Fonnte, Twilio, dll)
     // Simpan kredensial di .env
-    const API_URL = process.env.WHATSAPP_API_URL || 'https://api.fonnte.com/send';
-    const API_TOKEN = process.env.WHATSAPP_API_TOKEN;
+    const API_URL = process.env.WHATSAPP_API_URL || 'https://api.fonnte.com/send'
+    const API_TOKEN = process.env.WHATSAPP_API_TOKEN
 
     if (!API_TOKEN) {
-      console.warn('⚠️ WHATSAPP_API_TOKEN belum diset di .env. Pesan tidak dikirim.');
-      return;
+      console.warn('⚠️ WHATSAPP_API_TOKEN belum diset di .env. Pesan tidak dikirim.')
+      return
     }
 
     // Format Pesan
-    const itemsList = orderDetails.items.map(item => 
-      `- ${item.namaProduk} (${item.namaUkuran}) x${item.quantity} @ ${formatCurrency(item.subtotal)}`
-    ).join('\n');
+    const itemsList = orderDetails.items
+      .map(
+        (item) =>
+          `- ${item.namaProduk} (${item.namaUkuran}) x${item.quantity} @ ${formatCurrency(
+            item.subtotal
+          )}`
+      )
+      .join('\n')
 
     const message = `
 Halo *${orderDetails.namaPelanggan}*,
@@ -26,7 +31,7 @@ ${itemsList}
 Alamat Pengiriman: ${orderDetails.alamatPengiriman}
 
 Terima kasih telah berbelanja di The Candil's!
-    `.trim();
+    `.trim()
 
     // Payload (Sesuaikan dengan dokumentasi provider Anda)
     // Contoh untuk Fonnte:
@@ -34,35 +39,34 @@ Terima kasih telah berbelanja di The Candil's!
       target: phoneNumber,
       message: message,
       countryCode: '62', // Optional
-    };
+    }
 
-    console.log('📤 Mengirim WhatsApp ke', phoneNumber, '...');
+    console.log('📤 Mengirim WhatsApp ke', phoneNumber, '...')
 
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': API_TOKEN,
-        'Content-Type': 'application/json'
+        Authorization: API_TOKEN,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
-    });
+      body: JSON.stringify(payload),
+    })
 
-    const result = await response.json();
-    console.log('✅ WhatsApp Response:', result);
-    return result;
-
+    const result = await response.json()
+    console.log('✅ WhatsApp Response:', result)
+    return result
   } catch (error) {
-    console.error('❌ Gagal mengirim WhatsApp:', error.message);
+    console.error('❌ Gagal mengirim WhatsApp:', error.message)
     // Jangan throw error agar tidak mengganggu flow update status
   }
-};
+}
 
 const sendOrderShipped = async (phoneNumber, orderDetails) => {
   try {
-    const API_URL = process.env.WHATSAPP_API_URL || 'https://api.fonnte.com/send';
-    const API_TOKEN = process.env.WHATSAPP_API_TOKEN;
+    const API_URL = process.env.WHATSAPP_API_URL || 'https://api.fonnte.com/send'
+    const API_TOKEN = process.env.WHATSAPP_API_TOKEN
 
-    if (!API_TOKEN) return;
+    if (!API_TOKEN) return
 
     const message = `
 Halo *${orderDetails.namaPelanggan}*,
@@ -75,51 +79,50 @@ ${orderDetails.trackingInfo ? `\n*Link Tracking / Resi:*\n${orderDetails.trackin
 ${orderDetails.alamatPengiriman}
 
 Terima kasih!
-    `.trim();
+    `.trim()
 
     const payload = {
       target: phoneNumber,
       message: message,
       countryCode: '62',
-    };
+    }
 
     await fetch(API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': API_TOKEN,
-        'Content-Type': 'application/json'
+        Authorization: API_TOKEN,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
-    });
-
+      body: JSON.stringify(payload),
+    })
   } catch (error) {
-    console.error('❌ Gagal mengirim WhatsApp (Dikirim):', error.message);
+    console.error('❌ Gagal mengirim WhatsApp (Dikirim):', error.message)
   }
-};
+}
 
 const sendOrderCompleted = async (phoneNumber, orderDetails) => {
   try {
-    const API_URL = process.env.WHATSAPP_API_URL || 'https://api.fonnte.com/send';
-    const API_TOKEN = process.env.WHATSAPP_API_TOKEN;
+    const API_URL = process.env.WHATSAPP_API_URL || 'https://api.fonnte.com/send'
+    const API_TOKEN = process.env.WHATSAPP_API_TOKEN
 
-    if (!API_TOKEN) return;
+    if (!API_TOKEN) return
 
-    let frontendUrl = process.env.FRONTEND_URL || 'https://dev-the-candils-app.vercel.app';
+    let frontendUrl = process.env.FRONTEND_URL || 'https://the-candils-app.vercel.app'
     if (!frontendUrl.startsWith('http')) {
-        frontendUrl = `https://${frontendUrl}`;
+      frontendUrl = `https://${frontendUrl}`
     }
-    
+
     // Generate Review Links
-    let reviewSection = '';
+    let reviewSection = ''
     if (orderDetails.items && orderDetails.items.length > 0) {
-      const links = orderDetails.items.map(item => 
-        `- ${item.namaProduk}:\n  ${frontendUrl}/products/${item.produkId}`
-      ).join('\n\n');
-      
+      const links = orderDetails.items
+        .map((item) => `- ${item.namaProduk}:\n  ${frontendUrl}/products/${item.produkId}`)
+        .join('\n\n')
+
       reviewSection = `
 *Berikan Ulasan Produk:*
 ${links}
-      `.trim();
+      `.trim()
     }
 
     const message = `
@@ -132,43 +135,42 @@ Kami harap Anda menyukai produk kami! 🌟
 ${reviewSection}
 
 Sampai jumpa di pesanan berikutnya.
-    `.trim();
+    `.trim()
 
     const payload = {
       target: phoneNumber,
       message: message,
       countryCode: '62',
-    };
+    }
 
     await fetch(API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': API_TOKEN,
-        'Content-Type': 'application/json'
+        Authorization: API_TOKEN,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
-    });
-
+      body: JSON.stringify(payload),
+    })
   } catch (error) {
-    console.error('❌ Gagal mengirim WhatsApp (Selesai):', error.message);
+    console.error('❌ Gagal mengirim WhatsApp (Selesai):', error.message)
   }
-};
+}
 
 // Helper untuk format rupiah
 const formatCurrency = (value) => {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
-    minimumFractionDigits: 0
-  }).format(value);
-};
+    minimumFractionDigits: 0,
+  }).format(value)
+}
 
 const sendOrderCancelled = async (phoneNumber, orderDetails) => {
   try {
-    const API_URL = process.env.WHATSAPP_API_URL || 'https://api.fonnte.com/send';
-    const API_TOKEN = process.env.WHATSAPP_API_TOKEN;
+    const API_URL = process.env.WHATSAPP_API_URL || 'https://api.fonnte.com/send'
+    const API_TOKEN = process.env.WHATSAPP_API_TOKEN
 
-    if (!API_TOKEN) return;
+    if (!API_TOKEN) return
 
     const message = `
 Halo *${orderDetails.namaPelanggan}*,
@@ -180,33 +182,32 @@ Mohon maaf atas ketidaknyamanan ini.
 Jika Anda sudah melakukan pembayaran, silakan hubungi admin kami untuk proses pengembalian dana (refund).
 
 Terima kasih.
-    `.trim();
+    `.trim()
 
     const payload = {
       target: phoneNumber,
       message: message,
       countryCode: '62',
-    };
+    }
 
     await fetch(API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': API_TOKEN,
-        'Content-Type': 'application/json'
+        Authorization: API_TOKEN,
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload)
-    });
+      body: JSON.stringify(payload),
+    })
 
-    console.log(`📤 Notifikasi Drop pesanan #${orderDetails.pesananId} dikirim ke ${phoneNumber}`);
-
+    console.log(`📤 Notifikasi Drop pesanan #${orderDetails.pesananId} dikirim ke ${phoneNumber}`)
   } catch (error) {
-    console.error('❌ Gagal mengirim WhatsApp (Dibatalkan):', error.message);
+    console.error('❌ Gagal mengirim WhatsApp (Dibatalkan):', error.message)
   }
-};
+}
 
 module.exports = {
   sendOrderConfirmation,
   sendOrderShipped,
   sendOrderCompleted,
-  sendOrderCancelled
-};
+  sendOrderCancelled,
+}
