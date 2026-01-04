@@ -1,0 +1,21 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env*.local
+.env*.development
+.env*.production
+
+# Keep example
+!.env.example
+
+# Vercel
+.vercel
+
+# Logs
+*.log
+
+# OS
+.DS_Store
