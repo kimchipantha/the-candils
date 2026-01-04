@@ -3,8 +3,8 @@ const cors = require('cors')
 const path = require('path')
 
 // --- 1. Load Environment Variables ---
-// Di Vercel (Production), variabel dibaca langsung dari dashboard (System Env).
-// Kita hanya menggunakan dotenv jika berjalan di komputer lokal (Development).
+// Menggunakan path.resolve untuk memastikan file terbaca di lokal
+// Di Vercel (Production), ini akan dilewati karena process.env sudah terisi dari dashboard
 if (process.env.NODE_ENV !== 'production') {
   require('dotenv').config({
     path: path.resolve(__dirname, '.env.development'),
@@ -32,7 +32,6 @@ const userRoutes = require('./routes/userRoutes')
 const app = express()
 
 // --- 4. Konfigurasi CORS ---
-// Gunakan array sederhana agar Vercel lebih mudah memproses header
 const allowedOrigins = [
   'https://the-candils.vercel.app',
   'https://the-candils.com',
@@ -42,7 +41,7 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Izinkan jika tidak ada origin (seperti Postman atau server-to-server)
+    // Izinkan permintaan tanpa origin (seperti Postman)
     if (!origin) return callback(null, true)
 
     if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost')) {
@@ -57,9 +56,9 @@ const corsOptions = {
 }
 
 // --- 5. Middleware ---
+// Cukup gunakan ini. Middleware 'cors' otomatis menangani pre-flight (OPTIONS)
+// Jadi Anda tidak perlu lagi menulis app.options('*', ...) yang bikin crash di Node v25
 app.use(cors(corsOptions))
-// Tambahkan middleware khusus untuk menangani pre-flight request (OPTIONS)
-app.options('*', cors(corsOptions))
 
 app.use(express.json())
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
@@ -78,26 +77,26 @@ app.use('/api/users', userRoutes)
 app.get('/', (req, res) => {
   res.send({
     message: 'API is running...',
-    env: process.env.NODE_ENV,
+    mode: process.env.NODE_ENV || 'development',
   })
 })
 
 // --- 8. Global Error Handler ---
-// Penting untuk mencegah server crash total yang menyebabkan Error 500
 app.use((err, req, res, next) => {
   console.error('🔥 Server Error:', err)
   res.status(500).json({
     message: 'Internal Server Error',
-    error: process.env.NODE_ENV === 'production' ? 'See logs' : err.message,
+    error: process.env.NODE_ENV === 'production' ? 'Check server logs' : err.message,
   })
 })
 
 // --- 9. Start Server ---
 const PORT = process.env.PORT || 3000
-// Periksa apakah server dijalankan di Vercel (sebagai module) atau lokal
+
+// Listen hanya dijalankan di lokal. Vercel akan menangani ini secara otomatis sebagai serverless function.
 if (process.env.NODE_ENV !== 'production') {
   app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`)
+    console.log(`🚀 Server berjalan di port ${PORT}`)
   })
 }
 
