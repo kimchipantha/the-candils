@@ -1,49 +1,52 @@
 // db.js
 const mysql = require('mysql2')
 const path = require('path')
-require('dotenv').config({
-  path:
-    process.env.NODE_ENV === 'production'
-      ? path.resolve(__dirname, '..', '.env.production')
-      : path.resolve(__dirname, '..', '.env.development'),
-})
 
-// -------------------------------
-// 📌 Konfigurasi Database
-// -------------------------------
+// -----------------------------------------------------------------
+// 📌 Load Environment
+// -----------------------------------------------------------------
+// Di Vercel (Production), variabel dibaca langsung dari dashboard.
+// Kita hanya butuh dotenv untuk environment lokal.
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config({
+    path: path.resolve(__dirname, '..', '.env.development'),
+  })
+}
+
+// -----------------------------------------------------------------
+// 📌 Konfigurasi Database (Railway Optimized)
+// -----------------------------------------------------------------
 const connectionConfig = {
-  host: process.env.DB_HOST || '127.0.0.1',
+  host: process.env.DB_HOST,
   user: process.env.DB_USER,
-  password: process.env.DB_PASS,
+  password: process.env.DB_PASS, // Pastikan di Vercel namanya DB_PASS
   database: process.env.DB_NAME,
   port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 3306,
 
-  // Konfigurasi Standar (Aman untuk Railway)
+  // Konfigurasi Standar Pool
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
   enableKeepAlive: true,
   keepAliveInitialDelay: 0,
-  
-  // WAJIB: Aktifkan SSL untuk Railway
+
+  // WAJIB: Aktifkan SSL untuk Railway agar tidak "Handshake Timeout"
   ssl: {
-    rejectUnauthorized: false
-  }
+    rejectUnauthorized: false,
+  },
 }
 
-// Debug output
-console.log('🔍 Database Configuration:')
-console.log('   Environment:', process.env.NODE_ENV || 'development')
-console.log('   Host:', connectionConfig.host)
-console.log('   Port:', connectionConfig.port)
-console.log('   Database:', connectionConfig.database)
+// Debug output untuk Vercel Logs (Membantu tracking jika host kosong)
+console.log('🔍 Database Configuration Check:')
+console.log('   Host:', connectionConfig.host || 'NOT_FOUND')
+console.log('   Database:', connectionConfig.database || 'NOT_FOUND')
 
-// -------------------------------
+// -----------------------------------------------------------------
 // 📌 Pool Koneksi
-// -------------------------------
+// -----------------------------------------------------------------
 const pool = mysql.createPool(connectionConfig).promise()
 
-// Wrapper untuk handle auto-retry saat ECONNRESET
+// Wrapper untuk handle auto-retry (Mencegah Error 500 mendadak)
 const originalQuery = pool.query.bind(pool)
 
 pool.query = async function (...args) {
@@ -51,50 +54,36 @@ pool.query = async function (...args) {
     return await originalQuery(...args)
   } catch (err) {
     if (err.code === 'ECONNRESET' || err.code === 'PROTOCOL_CONNECTION_LOST') {
-      console.warn('🔄 Database connection lost (ECONNRESET), retrying query...')
+      console.warn('🔄 Koneksi database terputus, mencoba ulang query...')
       return await originalQuery(...args)
     }
     throw err
   }
 }
 
-// -------------------------------
-// 📌 Error Handling
-// -------------------------------
+// -----------------------------------------------------------------
+// 📌 Error Handling Pool
+// -----------------------------------------------------------------
 pool.on('error', (err) => {
   console.error('💥 Database pool error:', err.code)
-
-  switch (err.code) {
-    case 'PROTOCOL_CONNECTION_LOST':
-      console.log('🔄 Connection lost, reconnecting...')
-      break
-    case 'ER_CON_COUNT_ERROR':
-      console.error('⚠️ Too many connections')
-      break
-    case 'ECONNREFUSED':
-      console.error('⚠️ Connection refused — check DB credentials')
-      break
+  if (err.code === 'PROTOCOL_CONNECTION_LOST') {
+    console.log('🔄 Reconnecting...')
   }
 })
 
-// -------------------------------
-// 📌 Test Koneksi (Development Only)
-// -------------------------------
-if (process.env.NODE_ENV !== 'production') {
-  pool
-    .getConnection()
-    .then(async (conn) => {
-      console.log('✅ Koneksi database berhasil!')
-      const [info] = await conn.query('SELECT DATABASE() as db, NOW() as time')
-      console.log('   Connected to:', info[0].db)
-      console.log('   Server time:', info[0].time)
-      conn.release()
-    })
-    .catch((err) => {
-      console.error('❌ Gagal koneksi ke database:')
-      console.error('   Code:', err.code)
-      console.error('   Message:', err.message)
-    })
-}
+// -----------------------------------------------------------------
+// 📌 Test Koneksi (Hanya muncul di Log)
+// -----------------------------------------------------------------
+pool
+  .getConnection()
+  .then(async (conn) => {
+    console.log('✅ Berhasil terhubung ke database Railway!')
+    conn.release()
+  })
+  .catch((err) => {
+    console.error('❌ Gagal koneksi ke database Railway:')
+    console.error('   Pesan:', err.message)
+    console.error('   Kode:', err.code)
+  })
 
 module.exports = pool
