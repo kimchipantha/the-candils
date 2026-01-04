@@ -16,34 +16,37 @@
             </div>
 
             <!-- Komponen Formulir Checkout -->
-              <CheckoutFormComponent
-                v-else
-                v-model:full-name="form.fullName"
-                v-model:address="form.address"
-                v-model:contact="form.contact"
-                v-model:selected-ongkir-id="selectedOngkirId"
-                :ongkir-list="processedOngkirList"
-                :is-submitting="isSubmitting"
-                :file-preview-url="filePreviewUrl"
-                @file-selected="handleFileSelected"
-                @file-removed="handleFileRemoved"
-                @file-error="handleFileError"
-                @submit-order-and-upload="submitOrderAndUpload"
-              >
+            <CheckoutFormComponent
+              v-else
+              v-model:full-name="form.fullName"
+              v-model:address="form.address"
+              v-model:contact="form.contact"
+              v-model:selected-ongkir-id="selectedOngkirId"
+              :ongkir-list="processedOngkirList"
+              :is-submitting="isSubmitting"
+              :file-preview-url="filePreviewUrl"
+              @file-selected="handleFileSelected"
+              @file-removed="handleFileRemoved"
+              @file-error="handleFileError"
+              @submit-order-and-upload="submitOrderAndUpload"
+            >
               <template #summary>
-                <OrderSummaryComponent 
-                  :items="summaryItems" 
-                  :subtotal="subtotal" 
+                <OrderSummaryComponent
+                  :items="summaryItems"
+                  :subtotal="subtotal"
                   :shipping-cost="shippingCost"
-                  :total="total" 
+                  :total="total"
                 />
               </template>
             </CheckoutFormComponent>
           </div>
 
           <div class="hidden lg:block p-8 bg-indigo-50/50">
-            <div v-if="isLoading" class="w-full h-[560px] bg-gray-200 rounded-2xl animate-pulse"></div>
-            
+            <div
+              v-if="isLoading"
+              class="w-full h-[560px] bg-gray-200 rounded-2xl animate-pulse"
+            ></div>
+
             <!-- 1. Tampilkan Preview Bukti Bayar (Prioritas Utama) -->
             <img
               v-else-if="filePreviewUrl"
@@ -54,8 +57,8 @@
 
             <!-- 2. Tampilkan Split Images jika lebih dari 1 produk -->
             <div v-else-if="orderItems.length > 1" class="h-[560px] flex flex-col gap-2">
-              <div 
-                v-for="(item, index) in orderItems" 
+              <div
+                v-for="(item, index) in orderItems"
                 :key="item.keranjangItemId || index"
                 class="relative flex-1 overflow-hidden rounded-2xl shadow-lg border border-indigo-200 group"
               >
@@ -65,8 +68,12 @@
                   class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                 />
                 <!-- Optional: Tampilkan nama produk saat hover -->
-                <div class="absolute bottom-0 left-0 right-0 bg-black/50 p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                   <p class="text-white text-xs font-medium text-center truncate">{{ item.namaProduk }}</p>
+                <div
+                  class="absolute bottom-0 left-0 right-0 bg-black/50 p-2 transform translate-y-full group-hover:translate-y-0 transition-transform duration-300"
+                >
+                  <p class="text-white text-xs font-medium text-center truncate">
+                    {{ item.namaProduk }}
+                  </p>
                 </div>
               </div>
             </div>
@@ -99,8 +106,8 @@ interface CartItem {
   produkId: number
   ukuranId: number | null
   jumlah: number
-  harga_satuan: number | string 
-  subtotal: number | string 
+  harga_satuan: number | string
+  subtotal: number | string
   namaProduk: string
   namaUkuran: string | null
   foto: string
@@ -118,11 +125,11 @@ const filePreviewUrl = ref<string | null>(null)
 // API URLs (Menggunakan fetch bawaan browser)
 // Gunakan logika yang sama dengan api.ts untuk menentukan BASE_URL
 const API_BASE = import.meta.env.PROD
-  ? 'https://backend-the-candils.vercel.app/api'
-  : 'http://localhost:3000/api';
+  ? 'https://backend-candils.vercel.app/api'
+  : 'http://localhost:3000/api'
 
-const API_CART_URL = `${API_BASE}/cart`;
-const API_ORDER_URL = `${API_BASE}/pesanan`;
+const API_CART_URL = `${API_BASE}/cart`
+const API_ORDER_URL = `${API_BASE}/pesanan`
 
 const form = reactive({
   fullName: '',
@@ -146,31 +153,31 @@ const SCHEDULES = [
     days: [1, 2, 3, 4], // Senin - Kamis (0=Minggu, 1=Senin, dst)
     startHour: 16,
     endHour: 19,
-    message: 'Senin - Kamis (16:00 - 19:00)'
+    message: 'Senin - Kamis (16:00 - 19:00)',
   },
   {
     keywords: ['bukit indah'],
     days: [1, 2, 3, 4], // Senin - Kamis
     startHour: 6,
     endHour: 10,
-    message: 'Senin - Kamis (06:00 - 10:00)'
+    message: 'Senin - Kamis (06:00 - 10:00)',
   },
   {
     keywords: ['pamulang'],
     days: [6, 0], // Sabtu - Minggu
     startHour: 6,
     endHour: 10,
-    message: 'Sabtu - Minggu (06:00 - 10:00)'
-  }
+    message: 'Sabtu - Minggu (06:00 - 10:00)',
+  },
 ]
 
 // Fungsi Validasi Jadwal
 const validateSchedule = (ongkirName: string): { isOpen: boolean; message?: string } => {
   const nameLower = ongkirName.toLowerCase()
-  
+
   // Cari jadwal yang cocok berdasarkan nama
-  const schedule = SCHEDULES.find(s => s.keywords.some(k => nameLower.includes(k)))
-  
+  const schedule = SCHEDULES.find((s) => s.keywords.some((k) => nameLower.includes(k)))
+
   // Jika tidak ada jadwal khusus (misal JNE, GoSend, atau lokasi lain), anggap BUKA
   if (!schedule) return { isOpen: true }
 
@@ -193,15 +200,15 @@ const validateSchedule = (ongkirName: string): { isOpen: boolean; message?: stri
 
 // Computed Ongkir List dengan Status Validasi
 const processedOngkirList = computed(() => {
-  return ongkirList.value.map(ongkir => {
+  return ongkirList.value.map((ongkir) => {
     const check = validateSchedule(ongkir.nama)
     return {
       ...ongkir,
       isDisabled: !check.isOpen,
       // Jika tutup, tambahkan info jam operasional di label
-      displayLabel: check.isOpen 
+      displayLabel: check.isOpen
         ? `${ongkir.nama} - Rp ${toNumber(ongkir.biaya).toLocaleString('id-ID')}`
-        : `${ongkir.nama} (TUTUP - ${check.message})`
+        : `${ongkir.nama} (TUTUP - ${check.message})`,
     }
   })
 })
@@ -212,7 +219,7 @@ import { watch } from 'vue'
 watch(selectedOngkirId, (newId) => {
   if (!newId) return
 
-  const selectedOption = processedOngkirList.value.find(o => o.ongkirId === newId)
+  const selectedOption = processedOngkirList.value.find((o) => o.ongkirId === newId)
   if (selectedOption && selectedOption.isDisabled) {
     toast.error(`Maaf, toko ${selectedOption.nama} sedang tutup.`)
     // Reset pilihan jika user memaksa memilih (walaupun disabled di UI)
@@ -231,20 +238,21 @@ const getItemSubtotal = (item: CartItem): number => {
   return toNumber(item.harga_satuan) * item.jumlah
 }
 
-
 // Helper untuk mendapatkan URL gambar
 const getImageUrl = (fotoUrl: string | null) => {
-    const imageBase = import.meta.env.PROD ? 'https://backend-the-candils.vercel.app' : 'http://localhost:3000';
-    if (fotoUrl && fotoUrl.startsWith('http')) {
-      return fotoUrl
-    }
-    return `${imageBase}${fotoUrl || '/placeholder.svg'}`
+  const imageBase = import.meta.env.PROD
+    ? 'https://backend-candils.vercel.app'
+    : 'http://localhost:3000'
+  if (fotoUrl && fotoUrl.startsWith('http')) {
+    return fotoUrl
+  }
+  return `${imageBase}${fotoUrl || '/placeholder.svg'}`
 }
 
 // Computed property 'displayImageUrl' (Hanya untuk single product / fallback)
 const displayImageUrl = computed(() => {
-  if (filePreviewUrl.value) return filePreviewUrl.value; // Tampilkan preview file yang diupload
-  
+  if (filePreviewUrl.value) return filePreviewUrl.value // Tampilkan preview file yang diupload
+
   if (orderItems.value.length > 0) {
     return getImageUrl(orderItems.value[0].foto)
   }
@@ -310,7 +318,7 @@ const loadCheckoutData = async () => {
     }
     try {
       // NOTE: Menggunakan fetch, bukan Axios, jadi tidak perlu interceptor di sini
-      const response = await fetch(`${API_CART_URL}/${cartSessionId}`) 
+      const response = await fetch(`${API_CART_URL}/${cartSessionId}`)
       const result = await response.json()
       if (response.ok && result.success && result.data && result.data.length > 0) {
         orderItems.value = result.data
@@ -330,25 +338,26 @@ const loadCheckoutData = async () => {
 }
 
 // Computed properties
-const subtotal = computed(() => orderItems.value.reduce((acc, item) => {
+const subtotal = computed(() =>
+  orderItems.value.reduce((acc, item) => {
     return acc + getItemSubtotal(item)
-}, 0))
+  }, 0),
+)
 
 const shippingCost = computed(() => {
   if (!selectedOngkirId.value) return 0
-  const selected = ongkirList.value.find(o => o.ongkirId === selectedOngkirId.value)
+  const selected = ongkirList.value.find((o) => o.ongkirId === selectedOngkirId.value)
   return selected ? Number(selected.biaya) : 0
 })
 
 const total = computed(() => subtotal.value + shippingCost.value)
 
 const summaryItems = computed(() => {
-  return orderItems.value.map(item => ({
+  return orderItems.value.map((item) => ({
     ...item,
-    subtotal: getItemSubtotal(item) 
-  }));
-});
-
+    subtotal: getItemSubtotal(item),
+  }))
+})
 
 // --- HANDLERS (Dikonsolidasi dan Dihapus Duplikat) ---
 
@@ -362,13 +371,13 @@ const handleFileSelected = (event: Event) => {
   } else {
     // Jika file dibatalkan, bersihkan state
     if (filePreviewUrl.value) {
-        URL.revokeObjectURL(filePreviewUrl.value);
+      URL.revokeObjectURL(filePreviewUrl.value)
     }
-    selectedFile.value = null;
-    filePreviewUrl.value = null;
-    toast.info('Pilihan file dibatalkan.');
+    selectedFile.value = null
+    filePreviewUrl.value = null
+    toast.info('Pilihan file dibatalkan.')
   }
-};
+}
 
 const handleFileRemoved = () => {
   // Hapus URL object jika ada
@@ -387,10 +396,9 @@ const handleFileError = (message: string) => {
   const details = lines.slice(1).join(' | ')
 
   toast.error(mainMessage + (details ? `\n${details}` : ''), {
-    timeout: 5000, 
+    timeout: 5000,
   })
 }
-
 
 // --- Fungsi 'submitOrderAndUpload' ---
 const submitOrderAndUpload = async () => {
@@ -422,7 +430,7 @@ const submitOrderAndUpload = async () => {
   formData.append('namaPelanggan', form.fullName)
   formData.append('alamatPengiriman', form.address)
   formData.append('kontakPelanggan', form.contact)
-  
+
   // Tambahkan data Ongkir
   formData.append('ongkirId', String(selectedOngkirId.value))
   formData.append('biayaOngkir', String(shippingCost.value))
@@ -431,14 +439,14 @@ const submitOrderAndUpload = async () => {
   const itemsPayload = summaryItems.value.map((item) => ({
     produkId: item.produkId,
     ukuranId: item.ukuranId || null,
-    quantity: item.jumlah, 
+    quantity: item.jumlah,
     subtotal: item.subtotal, // Menggunakan subtotal yang sudah dihitung ulang
   }))
   formData.append('items', JSON.stringify(itemsPayload))
 
   // Tambahkan total harga (Grand Total)
-  formData.append('totalHarga', String(total.value));
-  
+  formData.append('totalHarga', String(total.value))
+
   // Tambahkan file
   formData.append('buktiPembayaran', selectedFile.value)
 

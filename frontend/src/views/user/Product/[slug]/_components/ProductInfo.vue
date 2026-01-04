@@ -131,7 +131,7 @@ const quantity = ref<number>(1)
 // API Base URL
 // API Base URL
 const API_BASE_URL = import.meta.env.PROD
-  ? 'https://backend-the-candils.vercel.app/api/cart'
+  ? 'https://backend-candils.vercel.app/api/cart'
   : 'http://localhost:3000/api/cart'
 
 // Computed: Harga final (Tidak Berubah)

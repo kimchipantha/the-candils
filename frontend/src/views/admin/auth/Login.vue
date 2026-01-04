@@ -113,9 +113,9 @@ const handleLogin = async () => {
 
   try {
     const API_BASE_URL = import.meta.env.PROD
-      ? 'https://backend-the-candils.vercel.app/api'
-      : 'http://localhost:3000/api';
-      
+      ? 'https://backend-candils.vercel.app/api'
+      : 'http://localhost:3000/api'
+
     const response = await axios.post(`${API_BASE_URL}/auth/login`, {
       username: adminId.value,
       password: password.value,
@@ -124,7 +124,7 @@ const handleLogin = async () => {
     const token = response.data.token
     const userRole = response.data.user?.role
     const userName = response.data.user?.namaLengkap
-    
+
     localStorage.setItem('authToken', token)
     if (userName) localStorage.setItem('adminName', userName)
     if (userRole) localStorage.setItem('adminRole', userRole)

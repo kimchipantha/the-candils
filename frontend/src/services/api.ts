@@ -6,12 +6,11 @@ import router from '@/router' // Impor router Vue Anda
 // -----------------------------------------------------------------
 // Base URL akan otomatis beralih:
 // - Development (npm run dev): http://localhost:3000/api
-// - Production (Deployment): https://backend-the-candils.vercel.app/api
+// - Production (Deployment): https://backend-candils.vercel.app/api
 const BASE_URL = import.meta.env.PROD
-  ? 'https://backend-the-candils.vercel.app/api' 
-  : 'http://localhost:3000/api'; 
+  ? 'https://backend-candils.vercel.app/api'
+  : 'http://localhost:3000/api'
 // -----------------------------------------------------------------
-
 
 // Buat instansi Axios kustom
 const api = axios.create({

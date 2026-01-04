@@ -14,9 +14,7 @@
           class="w-full h-full object-cover"
           @error="handleImageError"
         />
-        <div v-else class="w-full h-full flex items-center justify-center text-gray-400">
-          📦
-        </div>
+        <div v-else class="w-full h-full flex items-center justify-center text-gray-400">📦</div>
       </div>
 
       <div class="flex-grow">
@@ -34,7 +32,9 @@
         </div>
       </div>
 
-      <div class="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:mt-0 mt-2 relative">
+      <div
+        class="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:mt-0 mt-2 relative"
+      >
         <button
           @click="$emit('removeItem', item.keranjangItemId)"
           class="text-red-500 hover:text-red-700 sm:mb-5 transition-colors"
@@ -67,7 +67,10 @@
             +
           </button>
         </div>
-        <div v-if="item.jumlah >= item.stok" class="text-xs text-red-500 mt-1 sm:absolute sm:bottom-[-20px] sm:right-0 w-full text-right">
+        <div
+          v-if="item.jumlah >= item.stok"
+          class="text-xs text-red-500 mt-1 sm:absolute sm:bottom-[-20px] sm:right-0 w-full text-right"
+        >
           Max stok: {{ item.stok }}
         </div>
 
@@ -115,20 +118,20 @@ const getImageUrl = (fotoUrl: string | null | undefined): string => {
   if (!fotoUrl) {
     return 'https://placehold.co/100x100/eee/ccc?text=No+Image'
   }
-  
+
   // Cloudinary URL (starts with http/https) - return as is
   if (fotoUrl.startsWith('http://') || fotoUrl.startsWith('https://')) {
     return fotoUrl
   }
-  
+
   // Legacy local path - construct full URL
   if (fotoUrl.startsWith('/')) {
     const BASE_URL = import.meta.env.PROD
-      ? 'https://backend-the-candils.vercel.app'
-      : 'http://localhost:3000';
+      ? 'https://backend-candils.vercel.app'
+      : 'http://localhost:3000'
     return `${BASE_URL}${fotoUrl}`
   }
-  
+
   // Fallback
   return 'https://placehold.co/100x100/eee/ccc?text=No+Image'
 }

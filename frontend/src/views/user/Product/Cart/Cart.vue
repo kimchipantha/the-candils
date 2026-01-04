@@ -87,7 +87,7 @@ const cartItems = ref<CartItem[]>([])
 const loading = ref(true)
 
 const API_BASE_URL = import.meta.env.PROD
-  ? 'https://backend-the-candils.vercel.app/api'
+  ? 'https://backend-candils.vercel.app/api'
   : 'http://localhost:3000/api'
 
 // Get cart session ID
