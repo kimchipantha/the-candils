@@ -2,15 +2,16 @@ const express = require('express')
 const cors = require('cors')
 const path = require('path')
 
-// --- Load Environment (.env.development atau .env.production) ---
-require('dotenv').config({
-  path:
-    process.env.NODE_ENV === 'production'
-      ? path.resolve(__dirname, '.env.production')
-      : path.resolve(__dirname, '.env.development'),
-})
+// --- 1. Load Environment Variables ---
+// Di Vercel (Production), variabel dibaca langsung dari dashboard (System Env).
+// Kita hanya menggunakan dotenv jika berjalan di komputer lokal (Development).
+if (process.env.NODE_ENV !== 'production') {
+  require('dotenv').config({
+    path: path.resolve(__dirname, '.env.development'),
+  })
+}
 
-// --- Cloudinary Config ---
+// --- 2. Cloudinary Config ---
 const cloudinary = require('cloudinary').v2
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -18,7 +19,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 })
 
-// --- Import Routes ---
+// --- 3. Import Routes ---
 const authRoutes = require('./routes/auth')
 const productRoutes = require('./routes/productRoutes')
 const reviewRoutes = require('./routes/reviewRoutes')
@@ -30,43 +31,40 @@ const userRoutes = require('./routes/userRoutes')
 
 const app = express()
 
-// -----------------------------------------------------------------
-// PERBAIKAN CORS: Izinkan permintaan dari frontend lokal (Vite default: 5173)
-// -----------------------------------------------------------------
+// --- 4. Konfigurasi CORS ---
+// Gunakan array sederhana agar Vercel lebih mudah memproses header
 const allowedOrigins = [
-  // Tambahkan domain production Anda
-  'https://backend-the-candils.vercel.app',
-  // Tambahkan domain frontend lokal default Vite
-  'http://localhost:5173',
-  // Frontend Deployed (Vercel)
   'https://the-candils.vercel.app',
-  // Frontend Deployed (Hostinger)
   'https://the-candils.com',
   'https://www.the-candils.com',
+  'http://localhost:5173',
 ]
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Izinkan permintaan jika origin tidak didefinisikan (Postman, cURL)
+    // Izinkan jika tidak ada origin (seperti Postman atau server-to-server)
     if (!origin) return callback(null, true)
 
-    if (allowedOrigins.includes(origin) || origin.startsWith('http://localhost')) {
+    if (allowedOrigins.indexOf(origin) !== -1 || origin.startsWith('http://localhost')) {
       callback(null, true)
     } else {
       callback(new Error('Not allowed by CORS'))
     }
   },
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
 }
 
-// --- Middleware ---
-// CORS harus dipasang sebelum route
+// --- 5. Middleware ---
 app.use(cors(corsOptions))
+// Tambahkan middleware khusus untuk menangani pre-flight request (OPTIONS)
+app.options('*', cors(corsOptions))
+
 app.use(express.json())
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')))
 
-// --- Routes ---
+// --- 6. Routes ---
 app.use('/api/auth', authRoutes)
 app.use('/api/products/:produkId/reviews', reviewRoutes)
 app.use('/api/products', productRoutes)
@@ -76,25 +74,31 @@ app.use('/api/sales', salesRoutes)
 app.use('/api/home', homeRoutes)
 app.use('/api/users', userRoutes)
 
-// --- Default Route ---
+// --- 7. Default Route ---
 app.get('/', (req, res) => {
-  res.send({ message: 'API is running...' })
+  res.send({
+    message: 'API is running...',
+    env: process.env.NODE_ENV,
+  })
 })
 
-// --- Error Handler (Opsional) ---
+// --- 8. Global Error Handler ---
+// Penting untuk mencegah server crash total yang menyebabkan Error 500
 app.use((err, req, res, next) => {
-  console.error('🔥 ERROR:', err)
-  // Log error jika CORS yang memblokir
-  if (err.message.includes('CORS')) {
-    console.error('CORS BLOCK:', req.originalUrl, 'from', req.headers.origin)
-  }
-  res.status(500).json({ message: 'Internal Server Error', error: err.message })
+  console.error('🔥 Server Error:', err)
+  res.status(500).json({
+    message: 'Internal Server Error',
+    error: process.env.NODE_ENV === 'production' ? 'See logs' : err.message,
+  })
 })
 
-// --- Start Server ---
+// --- 9. Start Server ---
 const PORT = process.env.PORT || 3000
-app.listen(PORT, () => {
-  console.log(`🚀 Server berjalan di port ${PORT} (mode: ${process.env.NODE_ENV || 'development'})`)
-})
+// Periksa apakah server dijalankan di Vercel (sebagai module) atau lokal
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`)
+  })
+}
 
 module.exports = app
